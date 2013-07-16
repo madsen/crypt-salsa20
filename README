@@ -1,7 +1,7 @@
 Crypt-Salsa20 version {{$version}}, released {{$date}}
 
 
-This module {{ die "needs a description (README.md too)" }}.
+This module implements the Salsa20 encryption algorithm.
 
 
 
