@@ -72,9 +72,10 @@ print <<'';
         for (1 .. $loops) {
 
 for my $r (@round) {
+  die unless $r->[0] == $r->[1];
   printf <<'', @$r;
           $x = ($x%3$d + $x%4$d) %% LIMIT;
-          $x%1$d = $x%2$d ^ ((($x << %5$d) | ($x >> (32 - %5$d))) & 0xffffffff);
+          $x%1$d ^= (($x << %5$d) | ($x >> (32 - %5$d))) & 0xffffffff;
 
 }
 
