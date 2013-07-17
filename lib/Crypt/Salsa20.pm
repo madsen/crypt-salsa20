@@ -264,9 +264,7 @@ sub encrypt
 sub finish { '' }               # for Crypt::CBC compatibility
 
 #---------------------------------------------------------------------
-sub stream {
-  shift->{crypt};
-}
+sub cryptor { shift->{crypt} }
 
 #=====================================================================
 # Package Return Value:
