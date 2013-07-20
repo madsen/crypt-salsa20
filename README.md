@@ -1,7 +1,7 @@
 Crypt-Salsa20
 =============
 
-Crypt-Salsa20 is a Perl module that implements the Salsa20 encryption algorithm.
+Crypt-Salsa20 is a Perl module that implements the [Salsa20 encryption algorithm](http://cr.yp.to/snuffle.html).
 
 This is a Git repository where development of Crypt-Salsa20 takes place.  For more information, visit [Crypt-Salsa20 on CPAN](http://search.cpan.org/dist/Crypt-Salsa20/).
 
