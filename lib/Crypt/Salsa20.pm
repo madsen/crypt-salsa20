@@ -21,6 +21,8 @@ use 5.008;
 use strict;
 use warnings;
 
+use Carp ();
+
 our $VERSION = '0.01';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
@@ -33,9 +35,12 @@ sub BLOCKSIZE () { 64 } # 64 bytes = 512 bits
   $salsa20 = Crypt::Salsa20->new(-key => $key, ...);
 
 This constructs a new Crypt::Salsa20 object, with attributes supplied
-as S<C<< key => value >>> pairs.  The only required attribute at
-construction time is the key (but you must supply an IV before
-encrypting or decrypting).
+as S<C<< key => value >>> pairs.  For compatibility with Crypt::CBC,
+attribute names may have a leading hyphen (but unlike Crypt::CBC the
+hyphen is not required).
+
+The only required attribute at construction time is the key (but you
+must supply an IV before encrypting or decrypting).
 
 =cut
 
@@ -68,8 +73,8 @@ sub new
         $input10 = 0x79622d36;
         $input15 = 0x6b206574;
       } else {
-        croak("Invalid key length " . length($key) .
-              " (must be 16 or 32 bytes)");
+        Carp::croak("Invalid key length " . length($key) .
+                    " (must be 16 or 32 bytes)");
       }
       ($input1,$input2,$input3,$input4,$input11,$input12,$input13,$input14)
           = unpack('V8', $key);
@@ -227,10 +232,20 @@ sub new
 
   bless $self, $class;
 
-  $self->key($args{-key});
-  $self->iv($args{-iv}) if defined $args{-iv};
+  $loops = 10;          # 20 rounds by default (each loop is 2 rounds)
 
-  $loops = ($args{-rounds} || 20) >> 1;
+  # Set attributes from constructor parameters:
+  for my $attr (qw(key iv rounds)) {
+    for my $value (@args{$attr, "-$attr"}) {
+      if (defined $value) {
+        $self->$attr($value);
+        last;
+      }
+    }
+  } # end for each $attr
+
+  Carp::croak("key is a required attribute")
+        unless defined $input1;
 
   $self;
 } # end new
