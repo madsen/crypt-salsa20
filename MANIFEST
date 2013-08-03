@@ -12,6 +12,7 @@ t/12-verified.test-vectors
 t/20-verified.test-vectors
 t/8-verified.test-vectors
 t/Vectors.pm
+t/bigtest.t
 t/release-pod-coverage.t
 t/release-pod-syntax.t
 t/test-vectors-08.t

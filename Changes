@@ -2,6 +2,8 @@ Revision history for Crypt-Salsa20
 
 0.02   NOT
 	- Improved performance on 32-bit Perl (about 20% faster)
+	- Add bigtest.t
+	  (translation of bigtest.c from Salsa20 reference implementation)
 
 0.01   July 20, 2013
 	- Initial release
