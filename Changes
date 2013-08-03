@@ -1,6 +1,6 @@
 Revision history for Crypt-Salsa20
 
-0.02   NOT
+0.02   August 3, 2013
 	- Improved performance on 32-bit Perl (about 20% faster)
 	- Change 00-load.t to indicate 32-bit or 64-bit implementation
 	- Add 40-bigtest.t
