@@ -70,25 +70,48 @@ for my $n (0 .. 15) {
 
 print <<'';
         for (1 .. $loops) {
+          if (IS32BIT) {
+            # "use integer" must be used very carefully here.
+            # It causes the shift operators to use sign extension,
+            # which we don't want.  So the additions are under
+            # "use integer", but the shifts are not.
+            # The Perl optimizer isn't smart enough to know that
+            # "& 0xffffffff" is a no-op with 32-bit integer arithmetic,
+            # and the unnecessary ops slow things down.
 
 for my $r (@round) {
   die unless $r->[0] == $r->[1];
   printf <<'', @$r;
-          $x = ($x%3$d + $x%4$d) %% LIMIT;
-          $x%1$d ^= (($x << %5$d) | ($x >> (32 - %5$d))) & 0xffffffff;
+            { use integer; $x = $x%3$d + $x%4$d };
+            $x%1$d ^= ($x << %5$d) | ($x >> (32 - %5$d));
 
 }
 
 print <<'';
+          } else { # 64-bit integers
+            use integer;
+
+for my $r (@round) {
+  die unless $r->[0] == $r->[1];
+  printf <<'', @$r;
+            $x = ($x%3$d + $x%4$d) & 0xffffffff;
+            $x%1$d ^= (($x << %5$d) | ($x >> (32 - %5$d))) & 0xffffffff;
+
+}
+
+print <<'';
+          }
         }
-        $cryptblock = pack('V16',
+        { use integer;
+          $cryptblock = pack('V16',
 
 
 for my $n (0 .. 15) {
-  say "          (\$x$n + \$input$n) % LIMIT,";
+  say "            \$x$n + \$input$n,";
 }
 print <<'';
-        );
+          );
+        }
         # END generated code from tools/algorithm.pl
 
 __END__

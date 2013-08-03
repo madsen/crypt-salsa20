@@ -23,11 +23,12 @@ use warnings;
 
 use Carp ();
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 #=====================================================================
-sub LIMIT () { 2**32 }  # Salsa20 uses 32-bit unsigned integer arithmetic
+sub IS32BIT () { use integer; (0x7fffffff + 1) == -2147483648 }
+sub LIMIT () { IS32BIT ? 0 : 1<<32 }
 sub BLOCKSIZE () { 64 } # 64 bytes = 512 bits
 
 =method new
@@ -125,95 +126,174 @@ sub new
         $x14 = $input14;
         $x15 = $input15;
         for (1 .. $loops) {
-          $x = ($x0 + $x12) % LIMIT;
-          $x4 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x4 + $x0) % LIMIT;
-          $x8 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x8 + $x4) % LIMIT;
-          $x12 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x12 + $x8) % LIMIT;
-          $x0 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x5 + $x1) % LIMIT;
-          $x9 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x9 + $x5) % LIMIT;
-          $x13 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x13 + $x9) % LIMIT;
-          $x1 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x1 + $x13) % LIMIT;
-          $x5 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x10 + $x6) % LIMIT;
-          $x14 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x14 + $x10) % LIMIT;
-          $x2 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x2 + $x14) % LIMIT;
-          $x6 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x6 + $x2) % LIMIT;
-          $x10 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x15 + $x11) % LIMIT;
-          $x3 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x3 + $x15) % LIMIT;
-          $x7 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x7 + $x3) % LIMIT;
-          $x11 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x11 + $x7) % LIMIT;
-          $x15 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x0 + $x3) % LIMIT;
-          $x1 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x1 + $x0) % LIMIT;
-          $x2 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x2 + $x1) % LIMIT;
-          $x3 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x3 + $x2) % LIMIT;
-          $x0 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x5 + $x4) % LIMIT;
-          $x6 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x6 + $x5) % LIMIT;
-          $x7 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x7 + $x6) % LIMIT;
-          $x4 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x4 + $x7) % LIMIT;
-          $x5 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x10 + $x9) % LIMIT;
-          $x11 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x11 + $x10) % LIMIT;
-          $x8 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x8 + $x11) % LIMIT;
-          $x9 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x9 + $x8) % LIMIT;
-          $x10 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
-          $x = ($x15 + $x14) % LIMIT;
-          $x12 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
-          $x = ($x12 + $x15) % LIMIT;
-          $x13 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
-          $x = ($x13 + $x12) % LIMIT;
-          $x14 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
-          $x = ($x14 + $x13) % LIMIT;
-          $x15 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+          if (IS32BIT) {
+            # "use integer" must be used very carefully here.
+            # It causes the shift operators to use sign extension,
+            # which we don't want.  So the additions are under
+            # "use integer", but the shifts are not.
+            # The Perl optimizer isn't smart enough to know that
+            # "& 0xffffffff" is a no-op with 32-bit integer arithmetic,
+            # and the unnecessary ops slow things down.
+            { use integer; $x = $x0 + $x12 };
+            $x4 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x4 + $x0 };
+            $x8 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x8 + $x4 };
+            $x12 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x12 + $x8 };
+            $x0 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x5 + $x1 };
+            $x9 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x9 + $x5 };
+            $x13 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x13 + $x9 };
+            $x1 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x1 + $x13 };
+            $x5 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x10 + $x6 };
+            $x14 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x14 + $x10 };
+            $x2 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x2 + $x14 };
+            $x6 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x6 + $x2 };
+            $x10 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x15 + $x11 };
+            $x3 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x3 + $x15 };
+            $x7 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x7 + $x3 };
+            $x11 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x11 + $x7 };
+            $x15 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x0 + $x3 };
+            $x1 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x1 + $x0 };
+            $x2 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x2 + $x1 };
+            $x3 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x3 + $x2 };
+            $x0 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x5 + $x4 };
+            $x6 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x6 + $x5 };
+            $x7 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x7 + $x6 };
+            $x4 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x4 + $x7 };
+            $x5 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x10 + $x9 };
+            $x11 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x11 + $x10 };
+            $x8 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x8 + $x11 };
+            $x9 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x9 + $x8 };
+            $x10 ^= ($x << 18) | ($x >> (32 - 18));
+            { use integer; $x = $x15 + $x14 };
+            $x12 ^= ($x << 7) | ($x >> (32 - 7));
+            { use integer; $x = $x12 + $x15 };
+            $x13 ^= ($x << 9) | ($x >> (32 - 9));
+            { use integer; $x = $x13 + $x12 };
+            $x14 ^= ($x << 13) | ($x >> (32 - 13));
+            { use integer; $x = $x14 + $x13 };
+            $x15 ^= ($x << 18) | ($x >> (32 - 18));
+          } else { # 64-bit integers
+            use integer;
+            $x = ($x0 + $x12) & 0xffffffff;
+            $x4 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x4 + $x0) & 0xffffffff;
+            $x8 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x8 + $x4) & 0xffffffff;
+            $x12 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x12 + $x8) & 0xffffffff;
+            $x0 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x5 + $x1) & 0xffffffff;
+            $x9 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x9 + $x5) & 0xffffffff;
+            $x13 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x13 + $x9) & 0xffffffff;
+            $x1 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x1 + $x13) & 0xffffffff;
+            $x5 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x10 + $x6) & 0xffffffff;
+            $x14 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x14 + $x10) & 0xffffffff;
+            $x2 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x2 + $x14) & 0xffffffff;
+            $x6 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x6 + $x2) & 0xffffffff;
+            $x10 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x15 + $x11) & 0xffffffff;
+            $x3 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x3 + $x15) & 0xffffffff;
+            $x7 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x7 + $x3) & 0xffffffff;
+            $x11 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x11 + $x7) & 0xffffffff;
+            $x15 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x0 + $x3) & 0xffffffff;
+            $x1 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x1 + $x0) & 0xffffffff;
+            $x2 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x2 + $x1) & 0xffffffff;
+            $x3 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x3 + $x2) & 0xffffffff;
+            $x0 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x5 + $x4) & 0xffffffff;
+            $x6 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x6 + $x5) & 0xffffffff;
+            $x7 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x7 + $x6) & 0xffffffff;
+            $x4 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x4 + $x7) & 0xffffffff;
+            $x5 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x10 + $x9) & 0xffffffff;
+            $x11 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x11 + $x10) & 0xffffffff;
+            $x8 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x8 + $x11) & 0xffffffff;
+            $x9 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x9 + $x8) & 0xffffffff;
+            $x10 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+            $x = ($x15 + $x14) & 0xffffffff;
+            $x12 ^= (($x << 7) | ($x >> (32 - 7))) & 0xffffffff;
+            $x = ($x12 + $x15) & 0xffffffff;
+            $x13 ^= (($x << 9) | ($x >> (32 - 9))) & 0xffffffff;
+            $x = ($x13 + $x12) & 0xffffffff;
+            $x14 ^= (($x << 13) | ($x >> (32 - 13))) & 0xffffffff;
+            $x = ($x14 + $x13) & 0xffffffff;
+            $x15 ^= (($x << 18) | ($x >> (32 - 18))) & 0xffffffff;
+          }
         }
-        $cryptblock = pack('V16',
-          ($x0 + $input0) % LIMIT,
-          ($x1 + $input1) % LIMIT,
-          ($x2 + $input2) % LIMIT,
-          ($x3 + $input3) % LIMIT,
-          ($x4 + $input4) % LIMIT,
-          ($x5 + $input5) % LIMIT,
-          ($x6 + $input6) % LIMIT,
-          ($x7 + $input7) % LIMIT,
-          ($x8 + $input8) % LIMIT,
-          ($x9 + $input9) % LIMIT,
-          ($x10 + $input10) % LIMIT,
-          ($x11 + $input11) % LIMIT,
-          ($x12 + $input12) % LIMIT,
-          ($x13 + $input13) % LIMIT,
-          ($x14 + $input14) % LIMIT,
-          ($x15 + $input15) % LIMIT,
-        );
+        { use integer;
+          $cryptblock = pack('V16',
+            $x0 + $input0,
+            $x1 + $input1,
+            $x2 + $input2,
+            $x3 + $input3,
+            $x4 + $input4,
+            $x5 + $input5,
+            $x6 + $input6,
+            $x7 + $input7,
+            $x8 + $input8,
+            $x9 + $input9,
+            $x10 + $input10,
+            $x11 + $input11,
+            $x12 + $input12,
+            $x13 + $input13,
+            $x14 + $input14,
+            $x15 + $input15,
+          );
+        }
         # END generated code from tools/algorithm.pl
 
         # Increment the block counter:
-        if (++$input8 == LIMIT) {
-          $input8 = 0;
-          ++$input9;
+        { use integer;
+          if (($input8 += 1) == LIMIT) {
+            $input8 = 0 unless IS32BIT; # the 32-bit LIMIT is 0
+            $input9 += 1;
+          }
         }
 
         # XOR the text with the new $cryptblock
@@ -492,6 +572,7 @@ it does nothing and always returns the empty string.
 
 =for Pod::Coverage
 BLOCKSIZE
+IS32BIT
 LIMIT
 
 =for Pod::Loom-sort_attr
