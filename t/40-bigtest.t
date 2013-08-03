@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #---------------------------------------------------------------------
-# bigtest.t
+# 40-bigtest.t
 #
 # Copyright 2013 Christopher J. Madsen
 #

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #---------------------------------------------------------------------
-# test-vectors.t
+# 20-test-vectors-12.t
 #
 # Copyright 2013 Christopher J. Madsen
 #
@@ -12,7 +12,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either the
 # GNU General Public License or the Artistic License for more details.
 #
-# Run test vectors for the full Salsa20 20-round implementation
+# Run test vectors for Salsa20/12 (12-round version)
 #---------------------------------------------------------------------
 
 use strict;
@@ -25,6 +25,6 @@ use t::Vectors;
 
 plan tests => 960;
 
-test_vectors(20);
+test_vectors(12);
 
 done_testing;
