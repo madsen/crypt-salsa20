@@ -7,4 +7,5 @@ BEGIN {
     use_ok('Crypt::Salsa20');
 }
 
-diag("Testing Crypt::Salsa20 $Crypt::Salsa20::VERSION");
+diag(sprintf("Testing Crypt::Salsa20 %s (%d-bit)",
+             $Crypt::Salsa20::VERSION, Crypt::Salsa20::IS32BIT() ? 32 : 64));
