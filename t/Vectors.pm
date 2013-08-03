@@ -29,6 +29,13 @@ use Crypt::Salsa20;
 
 sub DIGEST_LEN () { 64 }
 
+my $strict_testing = !!$ENV{AUTHOR_TESTING};
+
+sub failed
+{
+  BAIL_OUT('failed when AUTHOR_TESTING is set') if $strict_testing;
+} # end failed
+
 sub test_vectors
 {
   my ($rounds) = @_;
@@ -71,7 +78,7 @@ sub test_vectors
         $key = "stream[$test->[0]..$test->[1]]";
         is(uc unpack('H*', substr($cbytes, $test->[0], $test->[1]-$test->[0]+1)),
            $args{$key},
-           "$name $key");
+           "$name $key") or failed;
       }
 
       my $xor_digest = "\0" x DIGEST_LEN;
@@ -79,9 +86,12 @@ sub test_vectors
         $xor_digest ^= substr($cbytes, $pos, DIGEST_LEN);
       }
 
-      is(uc unpack('H*', $xor_digest), $args{'xor-digest'}, "$name xor-digest");
+      is(uc unpack('H*', $xor_digest), $args{'xor-digest'}, "$name xor-digest")
+          or failed;
     } elsif (/^Primitive Name: (.+)/) {
       $prefix = "$1 ";
     }
   }
 } # end test_vectors
+
+1;
