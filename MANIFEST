@@ -16,6 +16,6 @@ t/30-test-vectors.t
 t/40-bigtest.t
 t/8-verified.test-vectors
 t/Vectors.pm
-t/release-pod-coverage.t
-t/release-pod-syntax.t
 tools/algorithm.pl
+xt/release/pod-coverage.t
+xt/release/pod-syntax.t
