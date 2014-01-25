@@ -1,7 +1,8 @@
 Revision history for Crypt-Salsa20
 
-0.03   NOT
+0.03   2014-01-25
 	- Minor documentation improvements
+	- No functional changes
 
 0.02   2013-08-03
 	- Improved performance on 32-bit Perl (about 20% faster)
