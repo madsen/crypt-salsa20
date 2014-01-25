@@ -23,7 +23,7 @@ use warnings;
 
 use Carp ();
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 #=====================================================================
@@ -478,7 +478,7 @@ sub finish { '' }               # for Crypt::CBC compatibility
 =method cryptor
 
   $cryptor = $salsa20->cryptor;
-  $ciphertext = $cryptor->($plaintext);
+  $ciphertext = $cryptor->($plaintext); # or if decrypting,
   $plaintext  = $cryptor->($ciphertext);
 
 This method is the most efficient way to use Crypt::Salsa20 if you are
@@ -506,12 +506,17 @@ __END__
   use Crypt::Salsa20;
 
   my $salsa20 = Crypt::Salsa20->new(-key => $key, -iv => $nonce);
+
+  # Use cryptor for the best performance:
   my $cryptor = $salsa20->cryptor;
-  my $ciphertext = $cryptor->($plaintext);
+  my $ciphertext = $cryptor->('plaintext');
+  # encryption & decryption are the same operation:
+  $salsa20->start;   # reset the block counter (keeping key & iv)
+  my $plaintext  = $cryptor->($ciphertext);
 
   # Or use Crypt::CBC-like API:
   my $ciphertext = $salsa20->encrypt('plaintext');
-  my $plaintext  = $salsa20->decrypt($plaintext);
+  my $plaintext  = $salsa20->decrypt($ciphertext);
 
 
 =head1 DESCRIPTION
